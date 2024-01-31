@@ -18,7 +18,7 @@ from include import loading_scripts_sql
 
 default_args = {
     'owner': 'Emmanuel',
-    'retries': 1,
+    'retries': 2,
     'retry_delay': timedelta(minutes=1)
 }
 
@@ -27,7 +27,8 @@ with DAG(
     default_args=default_args,
     start_date=datetime(2023, 10, 2),
     schedule_interval='@once',
-    template_searchpath="/usr/local/airflow/include"
+    template_searchpath="/usr/local/airflow/include",
+    tags=["transformation"]
 ) as dag:
     json = {
     "new_cluster": {"spark_version": "2.1.0-db3-scala2.11", "num_workers": 2},
