@@ -35,8 +35,8 @@ with DAG(
         "notebook_path": "/Users/airflow@example.com/PrepareData",
     },
 }
-    # notebook_transform_user_reviews = DatabricksRunNowOperator(
-    #     task_id = 'notebook_transform_user_reviews',
+    # notebook_transform_and_load = DatabricksRunNowOperator(
+    #     task_id = 'notebook_transform_and_load',
     #     databricks_conn_id = 'databricks_conn',
     #     job_id = DATABRICKS_JOB_ID
     # )
@@ -47,14 +47,14 @@ with DAG(
         sql="create_data_warehouse.sql"
     )
 
-    get_name_of_dim_device_file = PythonOperator(
-        task_id= 'get_name_of_dim_device_file',
-        python_callable=get_latest_dim_csv_file_name,
-        op_kwargs={
-            'container_name': 'results',
-            'dim_name': 'device'
-        }
-    )
+    # get_name_of_dim_device_file = PythonOperator(
+    #     task_id= 'get_name_of_dim_device_file',
+    #     python_callable=get_latest_dim_csv_file_name,
+    #     op_kwargs={
+    #         'container_name': 'results',
+    #         'dim_name': 'device'
+    #     }
+    # )
 
     load_dim_device_table = PythonOperator(
         task_id = 'load_dim_device_table',
@@ -62,18 +62,18 @@ with DAG(
         op_kwargs={
             'table_name': 'dw.dim_devices',
             'data_lake_folder': 'device',
-            'container_name': "results",
+            'container_name': "results"
         }
     )
 
-    get_name_of_dim_os_file = PythonOperator(
-        task_id= 'get_name_of_dim_os_file',
-        python_callable=get_latest_dim_csv_file_name,
-        op_kwargs={
-            'container_name': 'results',
-            'dim_name': 'os'
-        }
-    )
+    # get_name_of_dim_os_file = PythonOperator(
+    #     task_id= 'get_name_of_dim_os_file',
+    #     python_callable=get_latest_dim_csv_file_name,
+    #     op_kwargs={
+    #         'container_name': 'results',
+    #         'dim_name': 'os'
+    #     }
+    # )
 
     load_dim_os_table = PythonOperator(
         task_id = 'load_dim_os_table',
@@ -86,14 +86,14 @@ with DAG(
     )
 
     
-    get_name_of_dim_location_file = PythonOperator(
-        task_id= 'get_name_of_dim_location_file',
-        python_callable=get_latest_dim_csv_file_name,
-        op_kwargs={
-            'container_name': 'results',
-            'dim_name': 'location'
-        }
-    )
+    # get_name_of_dim_location_file = PythonOperator(
+    #     task_id= 'get_name_of_dim_location_file',
+    #     python_callable=get_latest_dim_csv_file_name,
+    #     op_kwargs={
+    #         'container_name': 'results',
+    #         'dim_name': 'location'
+    #     }
+    # )
 
     load_dim_location_table = PythonOperator(
         task_id = 'load_dim_location_table',
@@ -105,38 +105,35 @@ with DAG(
         }
     )
     
-    get_name_of_dim_date_file = PythonOperator(
-        task_id= 'get_name_of_dim_date_file',
-        python_callable=get_latest_dim_csv_file_name,
-        op_kwargs={
-            'container_name': 'results',
-            'dim_name': 'date'
-        }
-    )
+    # get_name_of_dim_date_file = PythonOperator(
+    #     task_id= 'get_name_of_dim_date_file',
+    #     python_callable=get_latest_dim_csv_file_name,
+    #     op_kwargs={
+    #         'container_name': 'results',
+    #         'dim_name': 'date'
+    #     }
+    # )
 
     load_dim_date_table = PythonOperator(
         task_id = 'load_dim_date_table',
         python_callable=load_csv_dim_data_from_staging_area,
         op_kwargs={
             'table_name': 'dw.dim_date',
-            'data_lake_folder': 'date',
+            'data_lake_folder': 'log_date',
             'container_name': "results",
         }
     )
     
     
-    # # Write script to load data into dimension table
-    # load_dimension_device = PostgresOperator(
-    #     task_id = 'load_dimension_device',
-    #     postgres_conn_id = POSTGRES_CONN_ID,
-    #     sql=loading_scripts_sql.load_data_into_dim_device
-    # )
-    
-    # notebook_transform_user_reviews >> create_data_warehouse 
+    load_fact_table = PythonOperator(
+        task_id = 'load_fact_table',
+        python_callable=load_fact_table_from_staging_area,
+        op_kwargs={
+            'table_name': 'dw.fact_movie_analytics',
+            'container_name': "results",
+        }
+    )
 
-    create_data_warehouse >> (get_name_of_dim_device_file, get_name_of_dim_os_file, get_name_of_dim_location_file, get_name_of_dim_date_file) 
-    get_name_of_dim_device_file >> load_dim_device_table
-    get_name_of_dim_os_file >> load_dim_os_table
-    get_name_of_dim_location_file >> load_dim_location_table
-    get_name_of_dim_date_file >> load_dim_date_table
+    create_data_warehouse >> (load_dim_device_table, load_dim_os_table, load_dim_location_table, load_dim_date_table)
 
+    (load_dim_date_table, load_dim_location_table, load_dim_os_table, load_dim_device_table) >> load_fact_table

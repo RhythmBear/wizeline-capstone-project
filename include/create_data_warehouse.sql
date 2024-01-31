@@ -2,10 +2,10 @@
 CREATE SCHEMA IF NOT EXISTS dw;
 CREATE TABLE IF NOT EXISTS dw.fact_movie_analytics (
     customerid INTEGER,
-    id_dim_devices INTEGER,
-    id_dim_location INTEGER,
-    id_dim_os INTEGER,
-    id_dim_browser INTEGER,
+    id_dim_devices VARCHAR,
+    id_dim_location VARCHAR,
+    id_dim_os VARCHAR,
+    id_dim_date VARCHAR,
     amount_spent DECIMAL(18, 5),
     review_score INTEGER,
     review_count INTEGER,
@@ -32,11 +32,7 @@ CREATE TABLE IF NOT EXISTS dw.dim_location (
 );
 
 CREATE TABLE IF NOT EXISTS dw.dim_os (
-    id_dim_devices INTEGER,
+    id_dim_os INTEGER,
     os VARCHAR
 );
 
-CREATE TABLE IF NOT EXISTS dw.dim_browser (
-    id_dim_devices INTEGER,
-    browser VARCHAR
-);

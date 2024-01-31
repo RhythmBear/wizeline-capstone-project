@@ -57,7 +57,7 @@ def load_data_from_azure_bucket(
 
 def get_latest_dim_csv_file_name(ti, container_name, dim_name):
    """
-   Get the name of the latest file that was written to the azure datalake.
+   Get the name of the latest file that was written to the azure datalake using the container name and the name of the dimension
    """
 
    wasb_hook = WasbHook(wasb_conn_id=AZ_CONN_ID)
@@ -70,20 +70,27 @@ def get_latest_dim_csv_file_name(ti, container_name, dim_name):
 
 
 def load_csv_dim_data_from_staging_area(
-        ti,
         table_name,
         data_lake_folder,
-        container_name,
+        container_name
 ):
     az_hook = WasbHook(wasb_conn_id="az_data_lake")
     psql_hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
 
-    # Fetch actual file path
-    file_path = ti.xcom_pull(task_ids='get_name_of_dim_device_file', key=f"{data_lake_folder}_filename")   
-    print(f"file path gotten is --> {file_path}")
+    # Retrieve The File Name of the dim file to be stored
+    file_list = az_hook.get_blobs_list_recursive(container_name=container_name, endswith='.csv')
+    print(file_list)
+    file_names = [file for file in file_list if f"log_reviews_result/{data_lake_folder}.csv/" in file]
+
+    file_name = file_names[0] 
+#     ti.xcom_push(key=f'{dim_name}_filename', value=file_name)
+
+#     # Fetch actual file path
+#     file_path = ti.xcom_pull(task_ids='get_name_of_dim_device_file', key=f"{data_lake_folder}_filename")   
+    print(f"file path gotten is --> {file_name}")
 
     with NamedTemporaryFile() as tmp:
-        az_hook.get_file(file_path=tmp.name, container_name=container_name, blob_name=file_path)
+        az_hook.get_file(file_path=tmp.name, container_name=container_name, blob_name=file_name)
 
         # psql_hook.bulk_load(table=postgres_table, 
         #                     tmp_file=tmp.name)
@@ -93,6 +100,35 @@ def load_csv_dim_data_from_staging_area(
                                     DELIMITER ',' 
                                     );
                               """, tmp.name)
+        
+def load_fact_table_from_staging_area(
+        ti, 
+        table_name,
+        container_name
+):
+    az_hook = WasbHook(wasb_conn_id="az_data_lake")
+    psql_hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
+
+    # get file name o
+    file_list = az_hook.get_blobs_list_recursive(container_name=container_name, endswith='.csv')
+    file_names = [file for file in file_list if 'fact/fact_movie_analytics.csv/part' in file]
+
+    file_name = file_names[0] 
+    print(f"file path gotten is --> {file_name}")
+
+    # Load the Data into the Fact Table
+    with NamedTemporaryFile() as tmp:
+        az_hook.get_file(file_path=tmp.name, container_name=container_name, blob_name=file_name)
+
+        # psql_hook.bulk_load(table=postgres_table, 
+        #                     tmp_file=tmp.name)
+        psql_hook.copy_expert(f"""COPY {table_name}
+                              FROM STDIN 
+                              WITH (FORMAT CSV,
+                                    DELIMITER ',' 
+                                    );
+                              """, tmp.name)
+
 
 
 def load_dim_data_from_staging_area(
