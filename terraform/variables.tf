@@ -13,13 +13,13 @@ variable "resource_group_name_prefix" {
 variable "vault_name" {
   type        = string
   description = "The name of the key vault to be created. The value will be randomly generated if blank."
-  default     = ""
+  default     = "wizeline-key-vault"
 }
 
-variable "key_name" {
-  type        = string
-  description = "The name of the key to be created. The value will be randomly generated if blank."
-  default     = ""
+variable "portal_user_id" {
+  type = string
+  description = "The user Id of the user that runs the portal"
+  # default = "8b5de92d-a9a8-4611-baa2-423b04e647f2"
 }
 
 variable "sku_name" {
@@ -30,6 +30,14 @@ variable "sku_name" {
     condition     = contains(["standard", "premium"], var.sku_name)
     error_message = "The sku_name must be one of the following: standard, premium."
   }
+}
+
+variable "secrets" {
+  description = "List of all secrets to be addedd to the key vault"
+  type = list(object({
+    name = string
+    value = string
+    }))
 }
 
 variable "key_permissions" {
