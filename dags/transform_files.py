@@ -36,26 +36,17 @@ with DAG(
         "notebook_path": "/Users/airflow@example.com/PrepareData",
     },
 }
-    # notebook_transform_and_load = DatabricksRunNowOperator(
-    #     task_id = 'notebook_transform_and_load',
-    #     databricks_conn_id = 'databricks_conn',
-    #     job_id = DATABRICKS_JOB_ID
-    # )
+    notebook_transform_and_load = DatabricksRunNowOperator(
+        task_id = 'notebook_transform_and_load',
+        databricks_conn_id = 'databricks_conn',
+        job_id = DATABRICKS_JOB_ID
+    )
 
     create_data_warehouse = PostgresOperator(
         task_id = 'create_data_warehouse',
         postgres_conn_id = POSTGRES_CONN_ID,
         sql="create_data_warehouse.sql"
     )
-
-    # get_name_of_dim_device_file = PythonOperator(
-    #     task_id= 'get_name_of_dim_device_file',
-    #     python_callable=get_latest_dim_csv_file_name,
-    #     op_kwargs={
-    #         'container_name': 'results',
-    #         'dim_name': 'device'
-    #     }
-    # )
 
     load_dim_device_table = PythonOperator(
         task_id = 'load_dim_device_table',
@@ -67,15 +58,6 @@ with DAG(
         }
     )
 
-    # get_name_of_dim_os_file = PythonOperator(
-    #     task_id= 'get_name_of_dim_os_file',
-    #     python_callable=get_latest_dim_csv_file_name,
-    #     op_kwargs={
-    #         'container_name': 'results',
-    #         'dim_name': 'os'
-    #     }
-    # )
-
     load_dim_os_table = PythonOperator(
         task_id = 'load_dim_os_table',
         python_callable=load_csv_dim_data_from_staging_area,
@@ -86,15 +68,6 @@ with DAG(
         }
     )
 
-    
-    # get_name_of_dim_location_file = PythonOperator(
-    #     task_id= 'get_name_of_dim_location_file',
-    #     python_callable=get_latest_dim_csv_file_name,
-    #     op_kwargs={
-    #         'container_name': 'results',
-    #         'dim_name': 'location'
-    #     }
-    # )
 
     load_dim_location_table = PythonOperator(
         task_id = 'load_dim_location_table',
@@ -106,14 +79,6 @@ with DAG(
         }
     )
     
-    # get_name_of_dim_date_file = PythonOperator(
-    #     task_id= 'get_name_of_dim_date_file',
-    #     python_callable=get_latest_dim_csv_file_name,
-    #     op_kwargs={
-    #         'container_name': 'results',
-    #         'dim_name': 'date'
-    #     }
-    # )
 
     load_dim_date_table = PythonOperator(
         task_id = 'load_dim_date_table',
@@ -135,6 +100,6 @@ with DAG(
         }
     )
 
-    create_data_warehouse >> (load_dim_device_table, load_dim_os_table, load_dim_location_table, load_dim_date_table)
+    create_data_warehouse >> notebook_transform_and_load >> (load_dim_device_table, load_dim_os_table, load_dim_location_table, load_dim_date_table)
 
     (load_dim_date_table, load_dim_location_table, load_dim_os_table, load_dim_device_table) >> load_fact_table

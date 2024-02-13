@@ -19,7 +19,6 @@ variable "vault_name" {
 variable "portal_user_id" {
   type = string
   description = "The user Id of the user that runs the portal"
-  # default = "8b5de92d-a9a8-4611-baa2-423b04e647f2"
 }
 
 variable "sku_name" {
