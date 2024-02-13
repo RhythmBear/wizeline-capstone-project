@@ -13,7 +13,11 @@ from airflow.utils.trigger_rule import TriggerRule
 from tempfile import NamedTemporaryFile
 from datetime import datetime, timedelta
 import os
+from dotenv import load_dotenv
 import pyarrow.parquet as pq
+
+load_dotenv()
+
 
 # Defining Constants
 AZ_CONN_ID = 'az_data_lake'
@@ -21,7 +25,7 @@ POSTGRES_CONN_ID = 'azure_database'
 POSTGRES_TABLE = 'user_purchase_schema.user_purchase'
 AZURE_CONTAINER_NAME = 'csv-files'
 AZ_FILE_NAME = 'user_purchase_updated.csv'
-DATABRICKS_JOB_ID = 841473727185472
+DATABRICKS_JOB_ID = os.getenv('DATABRICKS_JOB_ID')
 
 
 def check_if_file_exists(
