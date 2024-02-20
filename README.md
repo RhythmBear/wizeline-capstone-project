@@ -1,4 +1,4 @@
-# Wizeline-capstone-project
+# Wizeline Data Engineering Capstone Project
 
 ## Bi DashBoard (End Result)
 ![Image showing relationships between tables.](images/dashboard.png)
